@@ -1,6 +1,6 @@
-# DSE Control
+# DS5 Bridge Control / DSE Control
 
-DualSense Edge（DSE）+ 谷粒 悟空2 无线接收器 的 Windows 桌面控制台。
+Windows 桌面控制台：DualSense Edge（DSE）+ 谷粒 悟空2 无线接收器，以及官方 DS5Dongle（Pico2W DualSense Bridge）的配置与状态工具。
 
 ## 已实现
 
