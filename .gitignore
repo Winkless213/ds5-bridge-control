@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Build outputs
+build/
+dist/
+
+# Local QA and screenshots
+output/
+work/
+
+# Internal handoff / local notes
+HANDOFF.md
+
+# Editor / OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
