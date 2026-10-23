@@ -52,7 +52,7 @@ python ds5_app.py
 python -m PyInstaller "DS5 Bridge Control.spec" --noconfirm
 ```
 
-输出：`dist\DS5 Bridge Control\DS5 Bridge Control.exe`。UI 截图在 `output/frontend-qa/ds5-qml-*.png`。
+输出：`dist\DS5 Bridge Control\DS5 Bridge Control.exe`。UI 截图可用 `--screenshot` 生成到 `output/frontend-qa/ds5-qml-*.png`，该目录不纳入仓库。
 
 界面使用 Qt Quick / QML 重做：顶部导航 + 双栏卡片布局，窗口 1080–1280 宽都能保持结构；展开/收起只改变卡片高度，内容固定高度由卡片裁切，实测同一行文字在动画全程坐标不变。动效只服务状态反馈：页面切换 200ms 淡入 + 8px 上移，卡片展开 280ms `OutCubic`，箭头 220ms 旋转，Tab 指示条 240ms 滑动，滑块手柄/开关旋钮有短促缩放；没有循环、弹跳或自动播放。Windows 下使用 GDI ClearType 字体渲染，避免 DirectWrite 灰阶抗锯齿让中文发虚。顶部状态条实时显示连接、固件与电量，电量来自标准 DualSense 0x01 输入报文，约每秒刷新一次。
 
@@ -72,7 +72,7 @@ python -m PyInstaller "DS5 Bridge Control.spec" --noconfirm
 python -m pytest tests -q
 ```
 
-UI 截图在 `output/frontend-qa/`。
+截图模式运行后，UI 截图生成在 `output/frontend-qa/`，该目录不纳入仓库。
 
 ## 真机验证（2026-10-21）
 
