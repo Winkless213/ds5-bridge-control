@@ -12,7 +12,7 @@ def test_signal_text_thresholds():
 
 def test_theme_tokens_are_static():
     theme = ThemeModel()
-    assert theme.version == "1.4.0"
+    assert theme.version == "1.5.0"
     assert theme.accent == "#6FA8FF"
     assert theme.bg == "#080C11"
 

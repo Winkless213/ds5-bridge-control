@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 import time
 import traceback
 from pathlib import Path
@@ -45,6 +46,46 @@ def _screenshot_dir() -> Path:
     path = base / "output" / "frontend-qa"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _self_test_log_path() -> Path:
+    return Path(tempfile.gettempdir()) / "DS5BridgeControl-self-test.log"
+
+
+def _write_self_test_log(lines: list[str]) -> None:
+    try:
+        _self_test_log_path().write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _run_self_test(window: QQuickWindow, bridge: UiBridge) -> int:
+    """Verify the packaged runtime without requiring a controller."""
+    lines = [
+        f"time={time.strftime('%Y-%m-%d %H:%M:%S')}",
+        f"executable={sys.executable}",
+        f"frozen={getattr(sys, 'frozen', False)}",
+    ]
+    try:
+        import hid  # noqa: F401
+
+        lines.append(f"python={sys.version.split()[0]}")
+        lines.append(f"qml_page={window.property('page')!r}")
+        config_page = window.findChild(QObject, "configPage")
+        if config_page is None:
+            raise RuntimeError("QML configPage object was not created")
+        if not _icon_path().exists():
+            raise RuntimeError(f"application icon is missing: {_icon_path()}")
+        lines.append("result=ok")
+        _write_self_test_log(lines)
+        bridge.shutdown()
+        return 0
+    except BaseException:
+        lines.append("result=failed")
+        lines.append(traceback.format_exc())
+        _write_self_test_log(lines)
+        bridge.shutdown()
+        return 3
 
 
 def _run_screenshot(window: QQuickWindow, app: QApplication) -> None:
@@ -110,7 +151,12 @@ def _run_screenshot(window: QQuickWindow, app: QApplication) -> None:
 
 def main() -> int:
     screenshot = "--screenshot" in sys.argv
-    argv = [arg for arg in sys.argv if arg != "--screenshot"]
+    self_test = "--self-test" in sys.argv
+    argv = [arg for arg in sys.argv if arg not in ("--screenshot", "--self-test")]
+    if self_test:
+        # The installer uses this mode to check the bundled Qt/QML runtime
+        # without flashing a window.
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
     QQuickStyle.setStyle("Basic")
     app = QApplication(argv)
@@ -137,11 +183,18 @@ def main() -> int:
     roots = engine.rootObjects()
     if not roots:
         print(f"QML load failed: {qml}", flush=True)
+        _write_self_test_log([f"qml={qml}", "result=failed", "QML rootObjects is empty"])
+        bridge.shutdown()
         return 2
     window = roots[0]
     if not isinstance(window, QQuickWindow):
         print("QML root is not a window", flush=True)
+        _write_self_test_log(["result=failed", "QML root is not a QQuickWindow"])
+        bridge.shutdown()
         return 2
+
+    if self_test:
+        return _run_self_test(window, bridge)
 
     tray = None if screenshot else create_tray(app, window, bridge, app_icon)
 

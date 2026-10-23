@@ -50,7 +50,13 @@ python -m venv .venv
 旧版 QWidget 界面：`.venv\Scripts\python ds5_app.py`  
 DSE Control：`.venv\Scripts\python app.py`
 
-当前仓库只包含源码，不包含预编译二进制。
+当前仓库包含源码；预编译安装包见 [Releases](https://github.com/Winkless213/ds5-bridge-control/releases)。
+
+## 安装
+
+从 Releases 下载 `DS5-Bridge-Control-Setup-1.5.0.exe`。安装到当前用户目录，不需要管理员权限、Python 或额外运行库；安装程序会检查 64 位 Windows 10/11、Qt/VC 运行文件和安装后的启动自检。
+
+安装包未做代码签名，Windows SmartScreen 可能提示；可选择“更多信息 → 仍要运行”。
 
 ## 打包
 
@@ -59,6 +65,14 @@ python -m PyInstaller "DS5 Bridge Control.spec" --noconfirm
 ```
 
 输出：`dist\DS5 Bridge Control\DS5 Bridge Control.exe`（onedir，约 162 MB）。
+
+生成安装包需要 Inno Setup 7：
+
+```bat
+ISCC.exe installer\DS5BridgeControl.iss
+```
+
+输出：`work\release\installer\DS5-Bridge-Control-Setup-1.5.0.exe`。
 
 截图模式：
 
@@ -97,6 +111,7 @@ ds5_bridge/qml/            QML 页面与组件
 dse_panel/                 DSE Control 的协议、设备、映射和界面
 tests/                     单元测试
 tools/                     截图与冒烟脚本
+installer/                 Inno Setup 安装脚本
 docs/                      验证记录与逆向记录
 ```
 
