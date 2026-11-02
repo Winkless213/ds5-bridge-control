@@ -2,6 +2,7 @@
 """System tray integration for the QML console."""
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QEvent, QObject
@@ -12,6 +13,8 @@ if TYPE_CHECKING:
     from PySide6.QtGui import QWindow
 
     from .qml_bridge import UiBridge
+
+log = logging.getLogger("ds5.tray")
 
 
 def tray_summary(connected: bool, battery_text: str, firmware: str) -> str:
@@ -57,6 +60,8 @@ class TrayController(QObject):
         self._menu.addSeparator()
         self._refresh_action = self._menu.addAction("重新检测接收器")
         self._refresh_action.triggered.connect(self._refresh_device)
+        self._log_action = self._menu.addAction("打开日志目录")
+        self._log_action.triggered.connect(self._bridge.openLogFolder)
 
         self._menu.addSeparator()
         self._quit_action = self._menu.addAction("退出")
@@ -91,6 +96,7 @@ class TrayController(QObject):
     def quit(self) -> None:
         if self._quitting:
             return
+        log.info("从托盘退出")
         self._quitting = True
         self._tray.hide()
         self._window.close()

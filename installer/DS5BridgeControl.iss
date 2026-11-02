@@ -3,7 +3,7 @@
 ;   ISCC.exe installer\DS5BridgeControl.iss
 
 #define AppName "DS5 Bridge Control"
-#define AppVersion "1.5.0"
+#define AppVersion "1.6.0"
 #define AppPublisher "Winkless213"
 #define AppURL "https://github.com/Winkless213/ds5-bridge-control"
 #define AppExe "DS5 Bridge Control.exe"
@@ -18,7 +18,7 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}/issues
 AppUpdatesURL={#AppURL}/releases
-VersionInfoVersion=1.5.0.0
+VersionInfoVersion=1.6.0.0
 VersionInfoDescription={#AppName} installer
 VersionInfoProductName={#AppName}
 DefaultDirName={localappdata}\Programs\{#AppName}

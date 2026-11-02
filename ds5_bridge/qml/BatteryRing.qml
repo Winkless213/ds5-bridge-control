@@ -3,15 +3,29 @@ import QtQuick
 Item {
     id: root
     property int percent: -1
+    // normal / low / charging / full / error / unknown (bridge.batteryKind)
+    property string kind: "unknown"
+    property string caption: "电量"
     property int diameter: 104
+    // Animated copy of percent; "—" is shown from percent itself so an
+    // unknown state never flashes through 0%.
+    property real shown: percent < 0 ? 0 : percent
     width: diameter
     height: diameter
 
-    Behavior on percent {
+    readonly property color startColor: kind === "full"
+        ? theme.green
+        : (kind === "low" || kind === "error") ? theme.amber : theme.accent
+    readonly property color endColor: kind === "full"
+        ? "#7FE0B0"
+        : (kind === "low" || kind === "error") ? "#F7C873" : theme.accent2
+
+    Behavior on shown {
         NumberAnimation { duration: 600; easing.type: Easing.OutCubic }
     }
 
-    onPercentChanged: ring.requestPaint()
+    onShownChanged: ring.requestPaint()
+    onKindChanged: ring.requestPaint()
 
     Canvas {
         id: ring
@@ -26,7 +40,7 @@ Item {
             var r = Math.max(1, width / 2 - 7)
             var start = -Math.PI * 0.75
             var span = Math.PI * 1.5
-            var ratio = root.percent < 0 ? 0 : Math.max(0, Math.min(100, root.percent)) / 100
+            var ratio = root.percent < 0 ? 0 : Math.max(0, Math.min(100, root.shown)) / 100
 
             ctx.lineWidth = 7
             ctx.lineCap = "round"
@@ -37,8 +51,8 @@ Item {
 
             if (ratio > 0) {
                 var grad = ctx.createLinearGradient(0, 0, width, height)
-                grad.addColorStop(0, theme.accent)
-                grad.addColorStop(1, theme.accent2)
+                grad.addColorStop(0, root.startColor)
+                grad.addColorStop(1, root.endColor)
                 ctx.strokeStyle = grad
                 ctx.beginPath()
                 ctx.arc(c, c, r, start, start + span * ratio)
@@ -50,18 +64,30 @@ Item {
     Column {
         anchors.centerIn: parent
         spacing: -2
-        Text {
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.percent >= 0 ? root.percent + "%" : "—"
-            color: theme.text
-            font.family: "Bahnschrift"
-            font.pixelSize: 24
-            font.bold: true
+            spacing: 2
+            Text {
+                visible: root.kind === "charging"
+                anchors.verticalCenter: parent.verticalCenter
+                text: "⚡"
+                color: theme.accent
+                font.pixelSize: 15
+            }
+            Text {
+                text: root.percent >= 0 ? Math.round(root.shown) + "%" : "—"
+                color: theme.text
+                font.family: "Bahnschrift"
+                font.pixelSize: 24
+                font.bold: true
+            }
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "电量"
-            color: theme.muted
+            text: root.caption
+            color: (root.kind === "low" || root.kind === "error")
+                ? theme.amber
+                : root.kind === "full" ? theme.green : theme.muted
             font.pixelSize: 11
         }
     }

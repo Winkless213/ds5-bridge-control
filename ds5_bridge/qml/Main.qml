@@ -15,9 +15,11 @@ ApplicationWindow {
 
     property int page: 0
     readonly property var tabTitles: ["配置", "设备", "关于"]
+    // Both the config page's rate card and the device page show the live
+    // readout, so sample on either; the about page has none.
     readonly property bool rateActive: win.visible
         && win.visibility !== Window.Minimized
-        && win.page === 1
+        && (win.page === 0 || win.page === 1)
 
     font.family: "Microsoft YaHei UI"
     font.pixelSize: 15
@@ -154,20 +156,25 @@ ApplicationWindow {
                 }
 
                 Rectangle {
-                    width: 128
+                    id: batteryPill
+                    readonly property string kind: bridge.batteryKind
+                    readonly property color tint: kind === "full"
+                        ? theme.green
+                        : (kind === "low" || kind === "error") ? theme.amber : theme.accent
+                    width: Math.max(128, batteryRow.implicitWidth + 30)
                     height: 34
                     radius: 17
-                    color: Qt.rgba(0.435, 0.659, 1, 0.07)
-                    border.color: Qt.rgba(0.435, 0.659, 1, 0.20)
+                    color: Qt.rgba(tint.r, tint.g, tint.b, 0.07)
+                    border.color: Qt.rgba(tint.r, tint.g, tint.b, 0.22)
 
                     RowLayout {
+                        id: batteryRow
                         anchors.centerIn: parent
                         spacing: 7
                         BatteryGlyph {
                             percent: bridge.batteryPercent
-                            tint: bridge.batteryPercent >= 0 && bridge.batteryPercent <= 20
-                                ? theme.amber
-                                : theme.accent
+                            tint: batteryPill.tint
+                            charging: bridge.batteryCharging
                         }
                         Text {
                             text: bridge.batteryPercent >= 0 ? bridge.batteryPercent + "%" : "—"
@@ -175,6 +182,28 @@ ApplicationWindow {
                             font.pixelSize: 13
                             font.bold: true
                         }
+                        Text {
+                            visible: batteryPill.kind === "full"
+                                || batteryPill.kind === "charging"
+                                || batteryPill.kind === "error"
+                            text: bridge.batteryLabel
+                            color: batteryPill.tint
+                            font.pixelSize: 12
+                        }
+                    }
+
+                    MouseArea {
+                        id: batteryMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                    }
+
+                    ToolTip {
+                        visible: batteryMouse.containsMouse
+                        delay: 400
+                        text: bridge.batteryNote !== ""
+                            ? bridge.batteryText + "\n" + bridge.batteryNote
+                            : bridge.batteryText
                     }
                 }
 
@@ -222,7 +251,7 @@ ApplicationWindow {
                 objectName: "configPage"
                 onResetRequested: resetPopup.open()
             }
-            DevicePage {}
+            DevicePage { objectName: "devicePage" }
             AboutPage {}
         }
     }

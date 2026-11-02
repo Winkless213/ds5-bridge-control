@@ -4,6 +4,7 @@ Item {
     id: root
     property int percent: 100
     property color tint: theme.green
+    property bool charging: false
     width: 22
     height: 12
 
@@ -35,6 +36,30 @@ Item {
         height: 6
         radius: 1
         color: root.tint
+        opacity: root.charging ? 0.55 : 1
         Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+    }
+
+    // Lightning bolt while charging.
+    Canvas {
+        visible: root.charging
+        x: 4
+        y: 0
+        width: 10
+        height: 12
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.reset()
+            ctx.fillStyle = theme.text
+            ctx.beginPath()
+            ctx.moveTo(6.2, 0.5)
+            ctx.lineTo(1.5, 6.6)
+            ctx.lineTo(4.6, 6.6)
+            ctx.lineTo(3.6, 11.5)
+            ctx.lineTo(8.5, 5.0)
+            ctx.lineTo(5.3, 5.0)
+            ctx.closePath()
+            ctx.fill()
+        }
     }
 }

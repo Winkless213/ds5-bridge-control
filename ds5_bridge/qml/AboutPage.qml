@@ -141,7 +141,7 @@ Item {
                                 font.pixelSize: 13
                             }
                             Text {
-                                text: "适用固件：官方 v0.7.2 / v0.7.2-hotfix（config v5，19 字节）"
+                                text: "适用固件：官方 v0.7.2 / v0.7.2-hotfix（config v5，19 字节）。v0.8.0 起配置布局变了，本程序会自动切到只读，不会写入。"
                                 color: theme.muted
                                 font.pixelSize: 13
                                 wrapMode: Text.WordWrap
@@ -160,6 +160,55 @@ Item {
                                 font.pixelSize: 12
                                 wrapMode: Text.WordWrap
                                 Layout.fillWidth: true
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    objectName: "logCard"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 150
+                    radius: 16
+                    color: theme.card
+                    border.color: theme.border
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 22
+                        spacing: 8
+
+                        Text {
+                            text: "诊断日志"
+                            color: theme.textSoft
+                            font.pixelSize: 16
+                            font.bold: true
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "记录连接、配置读写、电量原始数据和错误，出问题时把这个文件夹里的 ds5-bridge.log 发出来即可。保留最近 5 个文件，每个最多 1 MB。"
+                            color: theme.muted
+                            font.pixelSize: 13
+                            wrapMode: Text.WordWrap
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            TextEdit {
+                                Layout.fillWidth: true
+                                text: bridge.logDir
+                                readOnly: true
+                                selectByMouse: true
+                                color: theme.textSoft
+                                selectionColor: theme.accent
+                                font.family: theme.mono
+                                font.pixelSize: 12
+                                wrapMode: TextEdit.WrapAnywhere
+                            }
+                            DeckButton {
+                                objectName: "openLogButton"
+                                text: "打开日志目录"
+                                onClicked: bridge.openLogFolder()
                             }
                         }
                     }

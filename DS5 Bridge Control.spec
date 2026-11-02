@@ -7,6 +7,9 @@ datas = [
 binaries = []
 hiddenimports = [
     'hid',
+    # play_test_haptics() imports this lazily, so Analysis cannot see it; the
+    # hooks-contrib hook then bundles PortAudio's DLL alongside it.
+    'sounddevice',
     'PySide6.QtQml',
     'PySide6.QtQuick',
     'PySide6.QtQuickControls2',

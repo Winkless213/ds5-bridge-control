@@ -6,8 +6,9 @@ Rectangle {
     property string title: ""
     property string subtitle: ""
     property string summary: ""
+    property color accent: theme.accent
     property bool open: true
-    property int contentHeight: 200
+    property int contentHeight: body.implicitHeight
     property bool hovered: false
     property real targetHeight: open ? 84 + contentHeight : 84
     default property alias content: body.data
@@ -47,7 +48,7 @@ Rectangle {
                     width: 4
                     height: 20
                     radius: 1
-                    color: theme.accent
+                    color: root.accent
                 }
 
                 ColumnLayout {
@@ -109,5 +110,8 @@ Rectangle {
             opacity: root.open ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 190 } }
         }
+
+        // Keeps header and rows on top when a taller neighbour stretches the card.
+        Item { Layout.fillHeight: true }
     }
 }

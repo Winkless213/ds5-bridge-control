@@ -20,7 +20,8 @@ from PySide6.QtQuick import QQuickWindow
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
-from ds5_bridge.qml_bridge import ThemeModel, UiBridge
+from ds5_bridge import applog
+from ds5_bridge.qml_bridge import APP_VERSION, ThemeModel, UiBridge
 from ds5_bridge.tray import create_tray
 
 APP_NAME = "DS5 Bridge 控制台"
@@ -68,6 +69,12 @@ def _run_self_test(window: QQuickWindow, bridge: UiBridge) -> int:
     ]
     try:
         import hid  # noqa: F401
+
+        # Loads PortAudio's DLL, which the HD-haptics test needs and which only
+        # gets bundled via the spec's hidden import. Devices are not enumerated:
+        # with no pad plugged in there are none, and that is not a packaging
+        # fault.
+        import sounddevice  # noqa: F401
 
         lines.append(f"python={sys.version.split()[0]}")
         lines.append(f"qml_page={window.property('page')!r}")
@@ -139,11 +146,20 @@ def _run_screenshot(window: QQuickWindow, app: QApplication) -> None:
         else:
             log(f"page already {current!r}")
         if config_page is not None:
+            # Cards fold a row at a time, so "collapse" folds the haptics row
+            # (both cards) and "expand" opens every row, including the system
+            # one that holds 声音增益 and 声音缓冲.
             if action == "collapse":
-                config_page.setProperty("audioOpen", False)
+                config_page.setProperty("hapticsRowOpen", False)
+                config_page.setProperty("systemRowOpen", False)
             elif action == "expand":
-                config_page.setProperty("audioOpen", True)
-        delay = 2200 if page == 1 else 620
+                config_page.setProperty("hapticsRowOpen", True)
+                config_page.setProperty("systemRowOpen", True)
+        # The config page now carries the live rate card too, so it needs the
+        # same settling time as the device page: the first sample lands about
+        # two seconds after the window appears, and a shot taken before that
+        # reads "已停止" with an empty chart.
+        delay = 2200 if page in (0, 1) else 620
         QTimer.singleShot(delay, lambda p=page, n=name, a=action: save_current(p, n, a))
 
     QTimer.singleShot(2800, capture_next)
@@ -157,6 +173,9 @@ def main() -> int:
         # The installer uses this mode to check the bundled Qt/QML runtime
         # without flashing a window.
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    else:
+        applog.setup_logging(APP_VERSION)
+        applog.install_qt_message_handler()
 
     QQuickStyle.setStyle("Basic")
     app = QApplication(argv)
@@ -183,6 +202,7 @@ def main() -> int:
     roots = engine.rootObjects()
     if not roots:
         print(f"QML load failed: {qml}", flush=True)
+        applog.log.error("QML 加载失败：%s", qml)
         _write_self_test_log([f"qml={qml}", "result=failed", "QML rootObjects is empty"])
         bridge.shutdown()
         return 2

@@ -88,6 +88,8 @@ Item {
                             BatteryRing {
                                 diameter: 116
                                 percent: bridge.batteryPercent
+                                kind: bridge.batteryKind
+                                caption: bridge.batteryLabel
                             }
 
                             ColumnLayout {
@@ -106,9 +108,22 @@ Item {
                                 }
                                 Text {
                                     text: bridge.batteryText
-                                    color: theme.accent
+                                    color: bridge.batteryKind === "full"
+                                        ? theme.green
+                                        : (bridge.batteryKind === "low" || bridge.batteryKind === "error")
+                                            ? theme.amber
+                                            : theme.accent
                                     font.pixelSize: 13
                                     font.bold: true
+                                }
+                                Text {
+                                    objectName: "batteryNote"
+                                    visible: bridge.batteryNote !== ""
+                                    Layout.maximumWidth: 520
+                                    text: bridge.batteryNote
+                                    color: theme.muted2
+                                    font.pixelSize: 12
+                                    wrapMode: Text.WordWrap
                                 }
                             }
 
@@ -131,7 +146,15 @@ Item {
 
                             Metric { label: "固件版本"; value: bridge.firmware }
                             Metric { label: "信号"; value: bridge.rssiText }
-                            Metric { label: "音频输出"; value: bridge.audioText }
+                            Metric { label: "音频活动（实时）"; value: bridge.audioText }
+                            Metric {
+                                objectName: "vibPathMetric"
+                                label: "震动通路（实时）"
+                                value: bridge.vibPathText
+                                accent: bridge.vibPathKind === "rumble" ? theme.amber
+                                    : bridge.vibPathKind === "haptics" ? theme.accent
+                                    : "transparent"
+                            }
                             Metric { label: "控制器模式"; value: bridge.deviceModeLabel }
                             Metric { label: "USB 型号"; value: bridge.vidText }
                             Metric { label: "配置格式"; value: bridge.configVersionText }
@@ -220,7 +243,7 @@ Item {
                             RowLayout {
                                 spacing: 4
                                 Text {
-                                    objectName: "reportRateValue"
+                                    objectName: "deviceReportRateValue"
                                     text: bridge.reportRateValue
                                     color: theme.text
                                     font.family: "Bahnschrift"
@@ -253,81 +276,10 @@ Item {
                             Item { Layout.fillWidth: true }
                         }
 
-                        Item {
+                        RateChart {
+                            objectName: "rateChart"
                             Layout.fillWidth: true
                             Layout.preferredHeight: 46
-
-                            Canvas {
-                                id: rateChart
-                                anchors.fill: parent
-                                onPaint: {
-                                    var ctx = getContext("2d")
-                                    ctx.clearRect(0, 0, width, height)
-                                    var values = bridge.reportRateSamples
-                                    if (values.length < 2)
-                                        return
-
-                                    var lo = values[0]
-                                    var hi = values[0]
-                                    for (var i = 1; i < values.length; i++) {
-                                        lo = Math.min(lo, values[i])
-                                        hi = Math.max(hi, values[i])
-                                    }
-                                    var pad = Math.max(10, (hi - lo) * 0.25)
-                                    lo = Math.max(0, lo - pad)
-                                    hi = hi + pad
-
-                                    var chartWidth = width
-                                    var chartHeight = height - 2
-                                    ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.06)
-                                    ctx.lineWidth = 1
-                                    ctx.beginPath()
-                                    ctx.moveTo(0, chartHeight)
-                                    ctx.lineTo(chartWidth, chartHeight)
-                                    ctx.stroke()
-
-                                    ctx.strokeStyle = bridge.reportRateStateKind === "warn"
-                                        ? theme.amber
-                                        : theme.accent
-                                    ctx.lineWidth = 2
-                                    ctx.lineJoin = "round"
-                                    ctx.lineCap = "round"
-                                    ctx.beginPath()
-                                    for (var j = 0; j < values.length; j++) {
-                                        var x = chartWidth * j / (values.length - 1)
-                                        var y = chartHeight
-                                            - (values[j] - lo) / Math.max(1, hi - lo) * chartHeight
-                                        if (j === 0)
-                                            ctx.moveTo(x, y)
-                                        else
-                                            ctx.lineTo(x, y)
-                                    }
-                                    ctx.stroke()
-
-                                    var lastX = chartWidth
-                                    var lastY = chartHeight
-                                        - (values[values.length - 1] - lo) / Math.max(1, hi - lo) * chartHeight
-                                    ctx.fillStyle = bridge.reportRateStateKind === "warn"
-                                        ? theme.amber
-                                        : theme.accent
-                                    ctx.beginPath()
-                                    ctx.arc(lastX - 2, lastY, 2.5, 0, Math.PI * 2)
-                                    ctx.fill()
-                                }
-                            }
-
-                            Connections {
-                                target: bridge
-                                function onRateChanged() { rateChart.requestPaint() }
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                visible: bridge.reportRateSamples.length < 2
-                                text: "等待采样…"
-                                color: theme.muted2
-                                font.pixelSize: 12
-                            }
                         }
                     }
                 }
